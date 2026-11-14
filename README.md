@@ -14,7 +14,7 @@ cp .env.example .env
 python -m uvicorn main:app --reload
 ```
 
-The committed `.env.example` sets `LLM_STUB=1`, so the API works without provider access or model calls. Open <http://localhost:8000/docs>.
+The committed `.env.example` sets `LLM_STUB=1`, so the API works without provider access or model calls. It is preconfigured for OpenAI GPT-6 Luna once you add an API key and turn stub mode off. Open <http://localhost:8000/docs>.
 
 ## Contract
 
@@ -42,7 +42,7 @@ Expected error body: `{"error":"Field 'text' is required"}`. Capture actual outp
 
 ## Enable a real provider
 
-The default example values target OpenRouter's OpenAI-compatible endpoint. Put your own key in the ignored `.env`, set `LLM_STUB=0`, and keep `LLM_ENABLED=true`. The three provider settings to swap are `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`; do not commit `.env` or real keys. For OpenRouter free models, follow the assignment brief's privacy settings and use made-up inputs only. The prompt lives in `prompts/triage-v1.md`, separate from user content.
+The example values target OpenAI's API using the `gpt-6-luna` model. Add your OpenAI API key to the ignored `.env`, set `LLM_STUB=0`, and keep `LLM_ENABLED=true`. The three provider settings are `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`; do not commit `.env` or real keys. Luna supports this project's Chat Completions call. The prompt lives in `prompts/triage-v1.md`, separate from user content.
 
 Set `LLM_ENABLED=false` to use a deterministic human-review fallback without making a model call. Each real request attempt prints a structured token, model, duration, prompt-version, retry, and status log. If a response is malformed or violates the schema, it receives one repair call; a second failure is quarantined and returns 422. Raw model text is never returned to the caller.
 
