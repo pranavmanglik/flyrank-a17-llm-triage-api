@@ -1,10 +1,10 @@
 # W7 A17 — Put an LLM behind your API
 
-This API classifies one customer support message into a closed category and urgency, with a confidence score and one-sentence reason. It is a single request and response, not a chatbot. Pydantic validates both the input and every model response before returning it.
+I built this API to classify one customer support message into a category and urgency, with a confidence score and a short reason. It handles one request at a time rather than acting as a chatbot. I use Pydantic to validate the request and the model's response.
 
 ## Run in stub mode
 
-Use Python 3.10 or newer from this folder:
+From this project folder, I set it up with Python 3.10 or newer:
 
 ```bash
 python -m venv .venv
@@ -14,7 +14,7 @@ cp .env.example .env
 python -m uvicorn main:app --reload
 ```
 
-The committed `.env.example` sets `LLM_STUB=1`, so the API works without provider access or model calls. It is preconfigured for OpenAI GPT-6 Luna once you add an API key and turn stub mode off. Open <http://localhost:8000/docs>.
+I leave `LLM_STUB=1` in `.env.example` so the API can be started without making a provider call. To try the real model, I add my OpenAI API key to `.env` and set `LLM_STUB=0`. I can then open <http://localhost:8000/docs> to try the endpoint.
 
 ## Contract
 
@@ -38,24 +38,26 @@ Invalid input checkpoint:
 curl -i -X POST http://localhost:8000/triage -H 'Content-Type: application/json' -d '{}'
 ```
 
-Expected error body: `{"error":"Field 'text' is required"}`. Capture actual output from your own run for the final submission.
+Expected error body: `{"error":"Field 'text' is required"}`.
 
 ## Enable a real provider
 
-The example values target OpenAI's API using the `gpt-6-luna` model. Add your OpenAI API key to the ignored `.env`, set `LLM_STUB=0`, and keep `LLM_ENABLED=true`. The three provider settings are `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`; do not commit `.env` or real keys. Luna supports this project's Chat Completions call. The prompt lives in `prompts/triage-v1.md`, separate from user content.
+I configured the example for OpenAI's API and the `gpt-6-luna` model. In my ignored `.env`, I set `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`, then set `LLM_STUB=0` and keep `LLM_ENABLED=true`. I don't commit `.env` or my API key. The system prompt is in `prompts/triage-v1.md`, separate from the support message being classified.
 
-Set `LLM_ENABLED=false` to use a deterministic human-review fallback without making a model call. Each real request attempt prints a structured token, model, duration, prompt-version, retry, and status log. If a response is malformed or violates the schema, it receives one repair call; a second failure is quarantined and returns 422. Raw model text is never returned to the caller.
+If I set `LLM_ENABLED=false`, the API returns a human-review fallback without calling the model. For a real request, the app logs the model, token counts, duration, prompt version, retry attempt, and status. If the model returns malformed data, the app tries one repair request; if that also fails validation, it saves the rejected result to quarantine and returns 422. It never returns raw model text to the API caller.
 
 ## Evaluation and submission evidence
 
-`evals/cases.json` contains eight hand-labeled examples, including ambiguous input. After configuring a provider and starting the server, run `python run_eval.py`. Add the actual score, date, and prompt version below; do not report an unrun or stub score as a real model evaluation.
+I tested `POST /triage` with GPT-6 Luna. I saved the terminal result in the screenshot below. I keep the evaluation score blank until I run the eight cases in `evals/cases.json` with the real provider using `python run_eval.py`.
 
-- Provider/model used: fill in after a real run.
-- Eval result (date and `triage-v1`): fill in after `python run_eval.py`.
-- One call's actual usage/cost: record a real structured log line and provider rate.
-- Estimated cost for 10,000 requests/day: calculate from measured input/output tokens and the selected provider's current rates; local Ollama has no provider token charge, but uses local compute.
-- What I would fix with another day: fill in after inspecting the evaluation failures.
+/home/pranav/Pictures/Screenshots/Screenshot_20261114_140858.png 
 
-The API key, real provider run, honest eval score, cost estimate, and public GitHub publication are personal submission steps. Never put real personal, confidential, or employer data into a free model endpoint.
+- Provider/model I tested: OpenAI GPT-6 Luna (`gpt-6-luna`).
+- Eval result (date and `triage-v1`): add after I run `python run_eval.py`.
+- One call's actual usage/cost: add the usage from a real request and the provider's rate.
+- Estimated cost for 10,000 requests/day: calculate this from measured input/output tokens and the selected provider's current rates.
+- What I would fix with another day: add after I review the evaluation results.
 
-The versioned system prompt is in `prompts/triage-v1.md`; the eight hand-labeled cases are in `evals/cases.json`. The evaluation runner scores category accuracy and prints each mismatch. No real-provider score is recorded yet: run it with your provider settings and add the observed score, date, cost log, and cost estimate above. Stub-mode results are not a real model evaluation.
+I use made-up support messages while testing and never put real personal, confidential, or employer data into a free model endpoint. I keep my API key private.
+
+The prompt is versioned in `prompts/triage-v1.md`. The evaluation runner checks category accuracy across eight examples and prints any mismatches. Stub-mode results don't count as a real model evaluation.
